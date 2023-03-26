@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.loongwind.compose.animation.test.common.HorizontalDottedLine
+import com.loongwind.compose.animation.test.common.VerticalDottedLine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -388,36 +390,5 @@ private suspend fun reverseAnimation(
     val result =  animatable.animateDecay(initialVelocity, splineBasedDecay)
     if(result.endReason == AnimationEndReason.BoundReached){
         reverseAnimation(animatable, -result.endState.velocity, splineBasedDecay)
-    }
-}
-
-@Composable
-private fun VerticalDottedLine() {
-    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-    Canvas(
-        Modifier
-            .fillMaxHeight()
-            .width(1.dp)) {
-        drawLine(
-            color = Color.Red,
-            start = Offset(0f, 0f),
-            end = Offset(0f, size.height),
-            pathEffect = pathEffect
-        )
-    }
-}
-@Composable
-private fun HorizontalDottedLine() {
-    val pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f), 0f)
-    Canvas(
-        Modifier
-            .fillMaxWidth()
-            .height(1.dp)) {
-        drawLine(
-            color = Color.Red,
-            start = Offset(0f, 0f),
-            end = Offset(size.width, 0f),
-            pathEffect = pathEffect
-        )
     }
 }
