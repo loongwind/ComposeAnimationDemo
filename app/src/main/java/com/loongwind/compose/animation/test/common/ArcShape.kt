@@ -15,9 +15,16 @@ class ArcShape(private val progress: Int) : Shape {
         layoutDirection: LayoutDirection,
         density: Density
     ): Outline {
+        val angle = progress / 100f * 360f
         val path = Path().apply {
             moveTo(size.width / 2f, size.height / 2f)
-            arcTo(Rect(0f, 0f, size.width, size.height), -90f, progress / 100f * 360f, false)
+            val rect = Rect(0f, 0f, size.width, size.height)
+            if(angle == 360f){
+                addOval(rect)
+            }else{
+                arcTo(rect, -90f, angle, false)
+            }
+
             close()
         }
         return Outline.Generic(path)

@@ -1,7 +1,7 @@
 package com.loongwind.compose.animation.test.eleven
 
+import android.util.Log
 import androidx.compose.animation.animateColor
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -343,44 +344,49 @@ data class UploadValue(
     val progress: Int,
     val progressAlpha: Float,
     val backgroundColor: Color,
-    val text:String
+    val text: String
 )
 
 @Composable
-private fun updateTransitionUpload(uploadState: UploadState) : UploadValue{
+private fun updateTransitionUpload(uploadState: UploadState): UploadValue {
     val transition = updateTransition(targetState = uploadState, label = "upload")
     val textAlpha by transition.animateFloat(label = "textAlpha") {
-        when(it){
+        when (it) {
             UploadState.Start, UploadState.Uploading -> 0f
             else -> 1f
         }
     }
     val boxWidth by transition.animateDp(label = "boxWidth") {
-        when(it){
+        when (it) {
             UploadState.Start, UploadState.Uploading -> 48.dp
             else -> 180.dp
         }
     }
-    val progress by transition.animateInt(label = "progress") {
-        when(it){
+    val progress by transition.animateInt(transitionSpec = {
+        when {
+            UploadState.Start isTransitioningTo UploadState.Uploading -> tween(durationMillis = 1000)
+            else -> spring()
+        }
+    }, label = "progress") {
+        when (it) {
             UploadState.Uploading, UploadState.Success -> 100
             else -> 0
         }
     }
     val progressAlpha by transition.animateFloat(label = "progressAlpha") {
-        when(it){
-            UploadState.Start,UploadState.Uploading -> 1f
+        when (it) {
+            UploadState.Start, UploadState.Uploading -> 1f
             else -> 0f
         }
     }
     val backgroundColor by transition.animateColor(label = "backgroundColor") {
-        when(it){
+        when (it) {
             UploadState.Normal -> Color.Blue
-            UploadState.Start,UploadState.Uploading -> Color.Gray
+            UploadState.Start, UploadState.Uploading -> Color.Gray
             else -> Color.Red
         }
     }
-    val text = when(uploadState){
+    val text = when (uploadState) {
         UploadState.Success -> "Success"
         else -> "Upload"
     }
@@ -436,7 +442,11 @@ fun UploadDemo() {
                     .background(Color.White)
             )
             // 替换为使用 uploadValue.text、uploadValue.textAlpha
-            Text(uploadValue.text, color = Color.White, modifier = Modifier.alpha(uploadValue.textAlpha))
+            Text(
+                uploadValue.text,
+                color = Color.White,
+                modifier = Modifier.alpha(uploadValue.textAlpha)
+            )
         }
     }
 }
