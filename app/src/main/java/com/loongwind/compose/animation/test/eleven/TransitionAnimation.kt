@@ -341,26 +341,52 @@ data class UploadValue(
     val textAlpha: Float,
     val boxWidth: Dp,
     val progress: Int,
-    val progressAlpha: Float
-) {
-    companion object
-}
-
-val UploadValue.Companion.VectorConverter: TwoWayConverter<UploadValue, AnimationVector4D>
-    get() = UploadToVector
-
-
-private val UploadToVector: TwoWayConverter<UploadValue, AnimationVector4D> = TwoWayConverter(
-    convertToVector = {
-        AnimationVector4D(
-            it.textAlpha,
-            it.boxWidth.value,
-            it.progress.toFloat(),
-            it.progressAlpha
-        )
-    },
-    convertFromVector = { UploadValue(it.v1, Dp(it.v2), it.v3.toInt(), it.v4) }
+    val progressAlpha: Float,
+    val backgroundColor: Color,
+    val text:String
 )
+
+@Composable
+private fun updateTransitionUpload(uploadState: UploadState) : UploadValue{
+    val transition = updateTransition(targetState = uploadState, label = "upload")
+    val textAlpha by transition.animateFloat(label = "textAlpha") {
+        when(it){
+            UploadState.Start, UploadState.Uploading -> 0f
+            else -> 1f
+        }
+    }
+    val boxWidth by transition.animateDp(label = "boxWidth") {
+        when(it){
+            UploadState.Start, UploadState.Uploading -> 48.dp
+            else -> 180.dp
+        }
+    }
+    val progress by transition.animateInt(label = "progress") {
+        when(it){
+            UploadState.Uploading, UploadState.Success -> 100
+            else -> 0
+        }
+    }
+    val progressAlpha by transition.animateFloat(label = "progressAlpha") {
+        when(it){
+            UploadState.Start,UploadState.Uploading -> 1f
+            else -> 0f
+        }
+    }
+    val backgroundColor by transition.animateColor(label = "backgroundColor") {
+        when(it){
+            UploadState.Normal -> Color.Blue
+            UploadState.Start,UploadState.Uploading -> Color.Gray
+            else -> Color.Red
+        }
+    }
+    val text = when(uploadState){
+        UploadState.Success -> "Success"
+        else -> "Upload"
+    }
+    return UploadValue(textAlpha, boxWidth, progress, progressAlpha, backgroundColor, text)
+
+}
 
 @Preview
 @Composable
@@ -368,44 +394,7 @@ fun UploadDemo() {
     val originWidth = 180.dp
     val circleSize = 48.dp
     var uploadState by remember { mutableStateOf(UploadState.Normal) }
-    var text by remember { mutableStateOf("Upload") }
-
-    val transition = updateTransition(targetState = uploadState, label = "upload")
-
-    val uploadValue by transition.animateValue(transitionSpec = {
-        when {
-            UploadState.Normal isTransitioningTo UploadState.Start -> spring()
-            else -> tween()
-        }
-    }, label = "uploadValue", typeConverter = UploadValue.VectorConverter) { state ->
-        when (state) {
-            UploadState.Normal -> UploadValue(1f, originWidth, 0, 0f)
-            UploadState.Start -> UploadValue(0f, circleSize, 0, 1f)
-            UploadState.Uploading -> UploadValue(0f, circleSize, 100, 1f)
-            UploadState.Success -> UploadValue(1f, originWidth, 100, 0f)
-        }
-    }
-    val backgroundColor by transition.animateColor(label = "backgroundColor") { state ->
-        when (state) {
-            UploadState.Normal -> Color.Blue
-            UploadState.Start -> Color.Gray
-            UploadState.Uploading -> Color.Gray
-            UploadState.Success -> Color.Red
-        }
-    }
-
-
-    // 创建 UploadValue 的 State
-//    val upload by  animateUploadAsState(uploadValue){
-//        // 监听动画完成修改状态
-//        if(uploadState == UploadState.Start){
-//            uploadState = UploadState.Uploading
-//        }else if(uploadState == UploadState.Uploading){
-//            uploadState = UploadState.Success
-//            text = "Success"
-//        }
-//    }
-
+    val uploadValue = updateTransitionUpload(uploadState = uploadState)
 
     Box(
         modifier = Modifier
@@ -416,27 +405,25 @@ fun UploadDemo() {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(circleSize / 2))
-                .background(backgroundColor)
-                // 替换为使用 upload.boxWidth
+                .background(uploadValue.backgroundColor)
+                // 替换为使用 uploadValue.boxWidth
                 .size(uploadValue.boxWidth, circleSize)
                 .clickable {
-                    if (uploadState == UploadState.Normal) {
-                        uploadState = UploadState.Start
-                    } else if (uploadState == UploadState.Start) {
-                        uploadState = UploadState.Uploading
-                    } else if (uploadState == UploadState.Uploading) {
-                        uploadState = UploadState.Success
-                        text = "Success"
+                    uploadState = when (uploadState) {
+                        UploadState.Normal -> UploadState.Start
+                        UploadState.Start -> UploadState.Uploading
+                        UploadState.Uploading -> UploadState.Success
+                        UploadState.Success -> UploadState.Normal
                     }
                 },
             contentAlignment = Alignment.Center,
         ) {
             Box(
-                // 替换为使用 upload.progress
+                // 替换为使用 uploadValue.progress
                 modifier = Modifier
                     .size(circleSize)
                     .clip(ArcShape(uploadValue.progress))
-                    // 替换为使用 upload.progressAlpha
+                    // 替换为使用 uploadValue.progressAlpha
                     .alpha(uploadValue.progressAlpha)
                     .background(Color.Blue)
             )
@@ -444,12 +431,12 @@ fun UploadDemo() {
                 modifier = Modifier
                     .size(40.dp)
                     .clip(RoundedCornerShape(20.dp))
-                    // 替换为使用 upload.progressAlpha
+                    // 替换为使用 uploadValue.progressAlpha
                     .alpha(uploadValue.progressAlpha)
                     .background(Color.White)
             )
-            // 替换为使用 upload.textAlpha
-            Text(text, color = Color.White, modifier = Modifier.alpha(uploadValue.textAlpha))
+            // 替换为使用 uploadValue.text、uploadValue.textAlpha
+            Text(uploadValue.text, color = Color.White, modifier = Modifier.alpha(uploadValue.textAlpha))
         }
     }
 }
