@@ -32,20 +32,27 @@ fun TransitionBaseUse() {
     // 创建状态 通过状态驱动动画
     var moveToRight by remember { mutableStateOf(false) }
     // 动画实例
-    val transition = updateTransition(targetState = moveToRight)
+    val transition = updateTransition(targetState = moveToRight, label = "moveAnimation")
 
-    val paddingStart by transition.animateDp { state ->
+    val paddingStart by transition.animateDp(label = "paddingStart") { state ->
         if (state) {
             200.dp
         } else {
             10.dp
         }
     }
-    val corner by transition.animateDp { state ->
+    val corner by transition.animateDp(label = "corner") { state ->
         if (state) {
             20.dp
         } else {
             0.dp
+        }
+    }
+    val color by transition.animateColor(label = "color") { state ->
+        if (state) {
+            Color.Green
+        } else {
+            Color.Blue
         }
     }
 
@@ -80,7 +87,7 @@ fun TransitionBaseUse() {
                 .padding(start = paddingStart, top = 30.dp)
                 .clip(RoundedCornerShape(corner))
                 .size(100.dp, 100.dp)
-                .background(Color.Blue)
+                .background(color)
                 .clickable {
                     // 修改状态
                     moveToRight = !moveToRight
@@ -161,7 +168,18 @@ fun TransitionSpec() {
     val transition = updateTransition(targetState = moveToRight, label = "Move")
 
     val paddingStart by transition.animateDp(
-        transitionSpec = { if (false isTransitioningTo true) spring() else tween() },
+        transitionSpec = {
+//            if(false == initialState && targetState == true){
+//                spring()
+//            }else{
+//                tween()
+//            }
+            if (false isTransitioningTo true) {
+                spring()
+            } else {
+                tween()
+            }
+        },
         label = "paddingStart"
     ) { state ->
         if (state) {
@@ -224,8 +242,6 @@ fun TransitionSpec() {
 @Preview
 @Composable
 fun InfiniteTransition() {
-// 创建状态 通过状态驱动动画
-    var moveToRight by remember { mutableStateOf(false) }
     // 动画实例
     val transition = rememberInfiniteTransition("infiniteMove")
     val animationSpec = infiniteRepeatable<Dp>(
@@ -270,10 +286,6 @@ fun InfiniteTransition() {
                 .padding(start = paddingStart, top = 30.dp)
                 .size(100.dp, 100.dp)
                 .background(Color.Blue)
-                .clickable {
-                    // 修改状态
-                    moveToRight = !moveToRight
-                }
         )
     }
 }
